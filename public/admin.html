@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>自己紹介アプリ - 回答画面</title>
+</head>
+<body>
+  <h2>誰の自己紹介でしょう？</h2>
+  <div id="nameDisplay">名前: </div>
+  <div id="wordDisplay">
+    <p id="displayWord1">ワード1: </p>
+    <p id="displayWord2">ワード2: </p>
+    <p id="displayWord3">ワード3: </p>
+    <p id="displayWord4">ワード4: </p>
+    <p id="displayWord5">ワード5: </p>
+  </div>
+  <label>回答者名（カンマ区切りで入力）: <input type="text" id="participantNames"><button onclick="setParticipants()">登録</button></label>
+  <div id="participantList"></div>
+  <label>正解者を選択: </label>
+  <div id="correctGuessers"></div>
+  <button onclick="recordScores()">得点を記録</button>
+  <div id="scoreBoard"></div>
+  <button onclick="displayNextIntroSet()">次の自己紹介を表示</button>
+  <button onclick="displayNextWord()">次のワード</button>
+  <button onclick="resetWordSets()">ワードセットリセット</button>
+  <button onclick="showTotalScores()">得点集計</button>
+  <button onclick="window.location.href='/user-list'">全ユーザー一覧</button>
+
+  <script>
+    let currentWordSet = [];
+    let currentWordIndex = 0;
+    let scores = {};
+    let participants = [];
+
+    function setParticipants() {
+      const input = document.getElementById('participantNames').value.trim();
+      if (!input) {
+        alert('参加者名を入力してください');
+        return;
+      }
+      participants = input.split(',').map(name => name.trim()).filter(name => name !== '');
+      updateParticipantList();
+      updateCorrectGuessers();
+    }
+
+    function updateParticipantList() {
+      const list = document.getElementById('participantList');
+      list.innerHTML = '<h3>参加者一覧</h3>';
+      participants.forEach(name => {
+        const p = document.createElement('p');
+        p.textContent = name;
+        list.appendChild(p);
+      });
+    }
+
+    function updateCorrectGuessers() {
+      const correctGuessers = document.getElementById('correctGuessers');
+      correctGuessers.innerHTML = '';
+      participants.forEach(name => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = name;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(name));
+        correctGuessers.appendChild(label);
+        correctGuessers.appendChild(document.createElement('br'));
+      });
+    }
+
+    async function displayNextIntroSet() {
+      try {
+        const response = await fetch('/random');
+        const data = await response.json();
+        currentWordSet = data;
+        currentWordIndex = 0;
+        clearDisplay();
+        document.getElementById('nameDisplay').innerText = `名前: ${data.name}`;
+        document.getElementById('displayWord1').innerText = `ワード1: ${data.words[0]}`;
+        currentWordIndex = 1;
+      } catch (error) {
+        alert('データ取得エラー');
+      }
+    }
+
+    function displayNextWord() {
+      if (currentWordSet.words && currentWordIndex < currentWordSet.words.length) {
+        const word = currentWordSet.words[currentWordIndex];
+        document.getElementById(`displayWord${currentWordIndex + 1}`).innerText = `ワード${currentWordIndex + 1}: ${word}`;
+        currentWordIndex++;
+      } else {
+        alert('次のワードがありません');
+      }
+    }
+
+    function recordScores() {
+      const points = 6 - currentWordIndex;
+      const selected = Array.from(document.querySelectorAll('#correctGuessers input:checked')).map(cb => cb.value);
+      selected.forEach(name => {
+        if (!scores[name]) scores[name] = 0;
+        scores[name] += points;
+      });
+
+      // 表示者にも2点加算（ワード5まで表示されたら）
+      const presenter = currentWordSet.name;
+      if (!scores[presenter]) scores[presenter] = 0;
+      if (currentWordIndex === 5) {
+        scores[presenter] += 2;
+      }
+
+      updateScoreBoard();
+    }
+
+    function updateScoreBoard() {
+      const scoreBoard = document.getElementById('scoreBoard');
+      scoreBoard.innerHTML = '<h3>得点表</h3>';
+      for (const [name, score] of Object.entries(scores)) {
+        const p = document.createElement('p');
+        p.textContent = `${name}: ${score} 点`;
+        scoreBoard.appendChild(p);
+      }
+    }
+
+    function clearDisplay() {
+      document.getElementById('nameDisplay').innerText = '名前: ';
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`displayWord${i}`).innerText = `ワード${i}: `;
+      }
+    }
+
+  </script>
+</body>
+</html>

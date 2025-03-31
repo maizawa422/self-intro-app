@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>自己紹介アプリ - ユーザ画面</title>
+</head>
+<body>
+  <h1>自己紹介ワード入力</h1>
+  <form id="wordForm">
+    <input type="text" placeholder="名前" id="name"><br>
+    <input type="text" placeholder="ワード1" id="word1"><br>
+    <input type="text" placeholder="ワード2" id="word2"><br>
+    <input type="text" placeholder="ワード3" id="word3"><br>
+    <input type="text" placeholder="ワード4" id="word4"><br>
+    <input type="text" placeholder="ワード5" id="word5"><br>
+    <button type="submit">送信</button>
+    <button type="button" onclick="editWords()">更新</button>
+  </form>
+
+  <!-- 注意点表示 -->
+  <p>・名前は推測されにくいものにしてください。</p>
+  <p>・修正する場合は、入力欄を修正後、更新ボタンを押してください。</p>
+
+  <script>
+    document.getElementById('wordForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const words = [
+        document.getElementById('word1').value.trim(),
+        document.getElementById('word2').value.trim(),
+        document.getElementById('word3').value.trim(),
+        document.getElementById('word4').value.trim(),
+        document.getElementById('word5').value.trim()
+      ];
+
+      if (!name || words.some(word => word === '')) {
+        alert('名前と5つすべてのワードを入力してください');
+        return;
+      }
+
+      try {
+        const response = await fetch('/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name, words })
+        });
+        const result = await response.json();
+        alert(result.message);
+      } catch (error) {
+        alert('データ送信エラー');
+        console.error('送信エラー:', error);
+      }
+    });
+
+    async function editWords() {
+      const name = document.getElementById('name').value.trim();
+      const words = [
+        document.getElementById('word1').value.trim(),
+        document.getElementById('word2').value.trim(),
+        document.getElementById('word3').value.trim(),
+        document.getElementById('word4').value.trim(),
+        document.getElementById('word5').value.trim()
+      ];
+
+      if (!name || words.some(word => word === '')) {
+        alert('名前と5つすべてのワードを入力してください');
+        return;
+      }
+
+      try {
+        const response = await fetch('/edit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name, words })
+        });
+        const result = await response.json();
+        alert(result.message);
+      } catch (error) {
+        alert('データ編集エラー');
+        console.error('編集エラー:', error);
+      }
+    }
+  </script>
+</body>
+</html>

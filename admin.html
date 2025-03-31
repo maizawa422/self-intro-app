@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>自己紹介アプリ - 管理画面</title>
+</head>
+<body>
+  <h2>管理画面</h2>
+  <div id="nameDisplay">名前: </div>
+  <div id="wordDisplay">
+    <p id="displayWord1">ワード1: </p>
+    <p id="displayWord2">ワード2: </p>
+    <p id="displayWord3">ワード3: </p>
+    <p id="displayWord4">ワード4: </p>
+    <p id="displayWord5">ワード5: </p>
+  </div>
+  <button onclick="displayNextIntroSet()">次の自己紹介を表示</button>
+  <button onclick="displayNextWord()">次のワード</button>
+  <button onclick="resetWordSets()">ワードセットリセット</button>
+  <button onclick="window.location.href='/user-list'">全ユーザー一覧</button>
+
+  <script>
+    let currentWordSet = [];
+    let currentWordIndex = 0;
+
+    async function displayNextIntroSet() {
+      try {
+        const response = await fetch('/random');
+        const data = await response.json();
+        currentWordSet = data;
+        currentWordIndex = 0;
+        clearDisplay();
+        document.getElementById('nameDisplay').innerText = `名前: ${data.name}`;
+        document.getElementById('displayWord1').innerText = `ワード1: ${data.words[0]}`;
+        currentWordIndex = 1;
+      } catch (error) {
+        alert('データ取得エラー');
+      }
+    }
+
+    function displayNextWord() {
+      if (currentWordSet.words && currentWordIndex < currentWordSet.words.length) {
+        const word = currentWordSet.words[currentWordIndex];
+        document.getElementById(`displayWord${currentWordIndex + 1}`).innerText = `ワード${currentWordIndex + 1}: ${word}`;
+        currentWordIndex++;
+      } else {
+        alert('次のワードがありません');
+      }
+    }
+
+    function clearDisplay() {
+      document.getElementById('nameDisplay').innerText = '名前: ';
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`displayWord${i}`).innerText = `ワード${i}: `;
+      }
+    }
+
+    async function resetWordSets() {
+      try {
+        await fetch('/reset', { method: 'POST' });
+        alert('ワードセットをリセットしました');
+        clearDisplay();
+        currentWordSet = [];
+        currentWordIndex = 0;
+      } catch (error) {
+        alert('リセットエラー');
+      }
+    }
+  </script>
+</body>
+</html>

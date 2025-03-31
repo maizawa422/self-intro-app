@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>全ユーザー一覧</title>
+</head>
+<body>
+  <h2>全ユーザー一覧</h2>
+  <div id="userList"></div>
+  <button onclick="window.location.href='/admin'">管理画面に戻る</button>
+
+  <script>
+    async function fetchUserList() {
+      try {
+        const response = await fetch('/api/users');
+        const data = await response.json();
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '';
+        if (data.length === 0) {
+          userList.innerHTML = '<p>データがありません。</p>';
+          return;
+        }
+        data.forEach((user, index) => {
+          const userDiv = document.createElement('div');
+          userDiv.innerHTML = `<h3>${index + 1}. ${user.name}</h3>`;
+          user.words.forEach((word, i) => {
+            const wordP = document.createElement('p');
+            wordP.textContent = `ワード${i + 1}: ${word}`;
+            userDiv.appendChild(wordP);
+          });
+          userList.appendChild(userDiv);
+        });
+      } catch (error) {
+        console.error('ユーザーデータの取得エラー:', error);
+        document.getElementById('userList').innerHTML = '<p>エラーが発生しました。</p>';
+      }
+    }
+
+    // 初期表示
+    fetchUserList();
+  </script>
+</body>
+</html>
