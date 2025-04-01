@@ -16,10 +16,6 @@
       "dest": "api/server.js"
     },
     {
-      "src": "/user",
-      "dest": "/public/user.html"
-    },
-    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
