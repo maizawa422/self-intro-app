@@ -11,6 +11,10 @@ app.use(express.json());
 // ファイルパス（絶対パス指定）
 const filePath = path.join(__dirname, 'words.json');
 
+// CORS対応
+const cors = require('cors');
+app.use(cors());
+
 // 初期化
 function initializeWords() {
   try {
@@ -100,7 +104,7 @@ app.post('/api/submit', (req, res) => {
 });
 
 // ワードを編集
-app.post('/edit', (req, res) => {
+app.post('/api/edit', (req, res) => {
   const { name, words } = req.body;
   console.log('編集リクエスト:', req.body);
   const data = loadWords();
