@@ -116,7 +116,7 @@ app.post('/edit', (req, res) => {
 });
 
 // ランダムで次のワードセットを取得
-app.get('/random', (req, res) => {
+app.get('/api/random', (req, res) => {
   try {
     let data = loadWords();
     const unshownData = data.filter(item => !item.shown);
@@ -136,7 +136,7 @@ app.get('/random', (req, res) => {
 });
 
 // ワードセットをリセット
-app.post('/reset', (req, res) => {
+app.post('/api/reset', (req, res) => {
   try {
     initializeWords();
     console.log('ワードセットをリセットしました');
