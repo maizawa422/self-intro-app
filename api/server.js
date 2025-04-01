@@ -84,7 +84,7 @@ app.get('/admin.html', (req, res) => {
 });
 
 // ワードを保存
-app.post('/submit', (req, res) => {
+app.post('/api/submit', (req, res) => {
   const { name, words } = req.body;
   console.log('受け取ったデータ:', req.body);
   const filteredWords = words.filter(word => word.trim() !== '');
