@@ -69,7 +69,7 @@
 
     async function displayNextIntroSet() {
       try {
-        const response = await fetch('/random');
+        const response = await fetch('/api/random');
         const data = await response.json();
         currentWordSet = data;
         currentWordIndex = 0;
