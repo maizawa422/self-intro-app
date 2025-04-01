@@ -65,7 +65,7 @@
 
     async function displayNextIntroSet() {
       try {
-        const response = await fetch('/random');
+        const response = await fetch('/api/random');
         const data = await response.json();
         console.log('取得したデータ:', data);
         currentWordSet = data;
@@ -99,7 +99,7 @@
 
     async function resetWordSets() {
       try {
-        await fetch('/reset', {
+        await fetch('/api/reset', {
           method: 'POST'
         });
         alert('ワードセットをリセットしました');
