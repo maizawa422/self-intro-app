@@ -2,18 +2,16 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(express.static('public'));
+app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
+app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 
 // ファイルパス（絶対パス指定）
 const filePath = path.join(__dirname, 'words.json');
-
-// CORS対応
-const cors = require('cors');
-app.use(cors());
 
 // 初期化
 function initializeWords() {
@@ -55,17 +53,17 @@ initializeWords();
 
 // ユーザ画面（登録用）
 app.get('/user', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'user.html'));
+  res.sendFile(path.join(__dirname, '../public', 'user.html'));
 });
 
 // 管理画面（表示用）
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, '../public', 'admin.html'));
 });
 
 // 全ユーザー一覧画面
 app.get('/user-list', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'user-list.html'));
+  res.sendFile(path.join(__dirname, '../public', 'user-list.html'));
 });
 
 // 全ユーザーデータを取得
@@ -74,17 +72,8 @@ app.get('/api/users', (req, res) => {
     const data = loadWords();
     res.json(data);
   } catch (error) {
-    res.json({ message: 'データ取得エラー' });
+    res.status(500).json({ message: 'データ取得エラー' });
   }
-});
-
-// URLの拡張子を省略するためのリダイレクト
-app.get('/user.html', (req, res) => {
-  res.redirect('/user');
-});
-
-app.get('/admin.html', (req, res) => {
-  res.redirect('/admin');
 });
 
 // ワードを保存
@@ -94,7 +83,7 @@ app.post('/api/submit', (req, res) => {
   const filteredWords = words.filter(word => word.trim() !== '');
   if (!name || filteredWords.length !== 5) {
     console.log('無効なデータ:', { name, words });
-    return res.json({ message: '名前と5つすべてのワードを入力してください' });
+    return res.status(400).json({ message: '名前と5つすべてのワードを入力してください' });
   }
   const data = loadWords();
   data.push({ name, words: filteredWords, currentIndex: 0, shown: false, timestamp: Date.now() });
@@ -115,7 +104,7 @@ app.post('/api/edit', (req, res) => {
     console.log('ワードが編集されました:', { name, words });
     res.json({ message: 'ワードが編集されました' });
   } else {
-    res.json({ message: '指定された名前のワードが見つかりません' });
+    res.status(404).json({ message: '指定された名前のワードが見つかりません' });
   }
 });
 
@@ -123,7 +112,14 @@ app.post('/api/edit', (req, res) => {
 app.get('/api/random', (req, res) => {
   try {
     let data = loadWords();
-    const unshownData = data.filter(item => !item.shown);
+    let unshownData = data.filter(item => !item.shown);
+
+    if (unshownData.length === 0) {
+      // 全て表示済みの場合、リセットして再利用
+      data.forEach(item => item.shown = false);
+      unshownData = data;
+    }
+
     if (unshownData.length > 0) {
       const randomIndex = Math.floor(Math.random() * unshownData.length);
       const wordSet = unshownData[randomIndex];
@@ -135,7 +131,7 @@ app.get('/api/random', (req, res) => {
     }
   } catch (error) {
     console.error('エラーが発生しました:', error);
-    res.json({ name: 'エラー', words: ['データ読み込みエラー'] });
+    res.status(500).json({ name: 'エラー', words: ['データ読み込みエラー'] });
   }
 });
 
@@ -143,11 +139,12 @@ app.get('/api/random', (req, res) => {
 app.post('/api/reset', (req, res) => {
   try {
     initializeWords();
+    saveWords([]);  // 空配列として初期化
     console.log('ワードセットをリセットしました');
     res.json({ message: 'ワードセットをリセットしました' });
   } catch (error) {
     console.error('リセットエラー:', error);
-    res.json({ message: 'リセットに失敗しました' });
+    res.status(500).json({ message: 'リセットに失敗しました' });
   }
 });
 
