@@ -16,6 +16,18 @@
       "dest": "api/server.js"
     },
     {
+      "src": "/user",
+      "dest": "/public/user.html"
+    },
+    {
+      "src": "/admin",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/user-list",
+      "dest": "/public/user-list.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
