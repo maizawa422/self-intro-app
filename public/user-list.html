@@ -6,37 +6,98 @@
 <body>
   <h2>全ユーザー一覧</h2>
   <div id="userList"></div>
-  <button onclick="window.location.href='/admin'">管理画面に戻る</button>
+  <button onclick="deleteSelected()">選択したワードセットを削除</button>
+  <button onclick="resetShownStatus()">選択したワードセットを再表示</button>
+  <br><br>
+  <a href="/admin">管理画面へ戻る</a>
 
   <script>
-    async function fetchUserList() {
+    async function loadUserList() {
       try {
         const response = await fetch('/api/users');
         const data = await response.json();
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
-        if (data.length === 0) {
-          userList.innerHTML = '<p>データがありません。</p>';
-          return;
-        }
-        data.forEach((user, index) => {
-          const userDiv = document.createElement('div');
-          userDiv.innerHTML = `<h3>${index + 1}. ${user.name}</h3>`;
-          user.words.forEach((word, i) => {
-            const wordP = document.createElement('p');
-            wordP.textContent = `ワード${i + 1}: ${word}`;
-            userDiv.appendChild(wordP);
-          });
-          userList.appendChild(userDiv);
+
+        data.forEach((item, index) => {
+          const div = document.createElement('div');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = item.name;
+          checkbox.id = `user-${index}`;
+
+          const label = document.createElement('label');
+          label.htmlFor = `user-${index}`;
+
+          // 表示済み/未表示の判定
+          const status = item.shown ? '表示済' : '未表示';
+
+          label.textContent = `${item.name}: ${item.words.join(', ')} [${status}]`;
+
+          div.appendChild(checkbox);
+          div.appendChild(label);
+          userList.appendChild(div);
         });
       } catch (error) {
-        console.error('ユーザーデータの取得エラー:', error);
-        document.getElementById('userList').innerHTML = '<p>エラーが発生しました。</p>';
+        alert('ユーザー一覧の取得に失敗しました');
+        console.error('エラー:', error);
       }
     }
 
-    // 初期表示
-    fetchUserList();
+    async function deleteSelected() {
+      const checkboxes = Array.from(document.querySelectorAll('#userList input[type="checkbox"]:checked'));
+      if (checkboxes.length === 0) {
+        alert('削除するワードセットを選択してください');
+        return;
+      }
+
+      const selectedNames = checkboxes.map(checkbox => checkbox.value);
+
+      try {
+        const response = await fetch('/api/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ names: selectedNames })
+        });
+        const result = await response.json();
+        alert(result.message);
+        loadUserList(); // 削除後にリロード
+      } catch (error) {
+        alert('削除エラー');
+        console.error('削除エラー:', error);
+      }
+    }
+
+    async function resetShownStatus() {
+      const checkboxes = Array.from(document.querySelectorAll('#userList input[type="checkbox"]:checked'));
+      if (checkboxes.length === 0) {
+        alert('再表示するワードセットを選択してください');
+        return;
+      }
+
+      const selectedNames = checkboxes.map(checkbox => checkbox.value);
+
+      try {
+        const response = await fetch('/api/reset-shown', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ names: selectedNames })
+        });
+        const result = await response.json();
+        alert(result.message);
+        loadUserList(); // 再表示後にリロード
+      } catch (error) {
+        alert('再表示エラー');
+        console.error('再表示エラー:', error);
+      }
+    }
+
+    // 初回ロード
+    loadUserList();
   </script>
 </body>
 </html>
