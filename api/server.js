@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 
 // ファイルパス（絶対パス指定）
-const filePath = path.join(__dirname, 'words.json');
+const filePath = path.join('/tmp', 'words.json');
 
 // 初期化
 function initializeWords() {
@@ -108,6 +108,45 @@ app.post('/api/edit', (req, res) => {
   }
 });
 
+// ワードセットを削除（重複を1つだけ削除）
+app.post('/api/delete', (req, res) => {
+  const { names } = req.body;
+  try {
+    let data = loadWords();
+    names.forEach(name => {
+      const index = data.findIndex(item => item.name === name);
+      if (index !== -1) {
+        data.splice(index, 1); // 最初に見つかった1件のみ削除
+      }
+    });
+    saveWords(data);
+    console.log('削除しました:', names);
+    res.json({ message: '選択したワードセットを削除しました' });
+  } catch (error) {
+    console.error('削除エラー:', error);
+    res.status(500).json({ message: '削除に失敗しました' });
+  }
+});
+
+// ワードセットの表示フラグをリセット（再表示）
+app.post('/api/reset-shown', (req, res) => {
+  const { names } = req.body;
+  try {
+    let data = loadWords();
+    data.forEach(item => {
+      if (names.includes(item.name)) {
+        item.shown = false; // 表示済みフラグをリセット
+      }
+    });
+    saveWords(data);
+    console.log('表示フラグをリセットしました:', names);
+    res.json({ message: '選択したワードセットを再表示しました' });
+  } catch (error) {
+    console.error('再表示エラー:', error);
+    res.status(500).json({ message: '再表示に失敗しました' });
+  }
+});
+
 // ランダムで次のワードセットを取得
 app.get('/api/random', (req, res) => {
   try {
@@ -115,20 +154,15 @@ app.get('/api/random', (req, res) => {
     let unshownData = data.filter(item => !item.shown);
 
     if (unshownData.length === 0) {
-      // 全て表示済みの場合、リセットして再利用
-      data.forEach(item => item.shown = false);
-      unshownData = data;
+      res.json({ name: 'データなし', words: ['ワードがありません', 'ワードがありません', 'ワードがありません', 'ワードがありません', 'ワードがありません'] });
+      return;
     }
 
-    if (unshownData.length > 0) {
-      const randomIndex = Math.floor(Math.random() * unshownData.length);
-      const wordSet = unshownData[randomIndex];
-      wordSet.shown = true;
-      saveWords(data);
-      res.json({ name: wordSet.name, words: wordSet.words });
-    } else {
-      res.json({ name: 'データなし', words: ['ワードがありません', 'ワードがありません', 'ワードがありません', 'ワードがありません', 'ワードがありません'] });
-    }
+    const randomIndex = Math.floor(Math.random() * unshownData.length);
+    const wordSet = unshownData[randomIndex];
+    wordSet.shown = true;
+    saveWords(data);
+    res.json({ name: wordSet.name, words: wordSet.words });
   } catch (error) {
     console.error('エラーが発生しました:', error);
     res.status(500).json({ name: 'エラー', words: ['データ読み込みエラー'] });
@@ -139,7 +173,7 @@ app.get('/api/random', (req, res) => {
 app.post('/api/reset', (req, res) => {
   try {
     initializeWords();
-    saveWords([]);  // 空配列として初期化
+    saveWords([]);
     console.log('ワードセットをリセットしました');
     res.json({ message: 'ワードセットをリセットしました' });
   } catch (error) {
